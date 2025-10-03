@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Pokročilý detektor zařízení</title>
+<style>
+  body {
+    font-family: monospace;
+    background: linear-gradient(135deg,#e0f7ff,#f0f8ff);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+  }
+  #info {
+    background: #fff;
+    border: 3px solid #333;
+    padding: 25px;
+    width: 700px;
+    line-height: 1.8;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    transition: all 0.3s ease;
+  }
+  #info:hover { transform: scale(1.02); }
+  h2 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 25px;
+  }
+  .label { color: #555; }
+  .value { color: #111; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>Pokročilý detektor zařízení</h2>
+<div id="info">Zjišťuji informace...</div>
+
+<script>
+function detectDevice() {
+  const ua = navigator.userAgent;
+  const platform = navigator.platform;
+  const info = {};
+
+  // Typ zařízení
+  if (/Mobi|Android/i.test(ua)) info.deviceType = "Mobil";
+  else if (/iPad|Tablet/i.test(ua)) info.deviceType = "Tablet";
+  else info.deviceType = "Počítač";
+
+  // Operační systém
+  if (/Windows NT/i.test(ua)) info.os = "Windows";
+  else if (/Mac OS X/i.test(ua)) info.os = "MacOS";
+  else if (/Android/i.test(ua)) info.os = "Android";
+  else if (/iPhone|iPad|iPod/i.test(ua)) info.os = "iOS";
+  else info.os = "Neznámý";
+
+  // Prohlížeč
+  if (/Chrome\/\d+/i.test(ua) && !/Edg/i.test(ua)) info.browser = "Chrome " + ua.match(/Chrome\/([0-9.]+)/)[1];
+  else if (/Firefox\/\d+/i.test(ua)) info.browser = "Firefox " + ua.match(/Firefox\/([0-9.]+)/)[1];
+  else if (/Safari\/\d+/i.test(ua) && /Version\/\d+/i.test(ua)) info.browser = "Safari " + ua.match(/Version\/([0-9.]+)/)[1];
+  else if (/Edg\/\d+/i.test(ua)) info.browser = "Edge " + ua.match(/Edg\/([0-9.]+)/)[1];
+  else info.browser = "Neznámý";
+
+  // Značka a model
+  info.deviceBrand = "Neznámá značka";
+  info.deviceModel = "Neznámý model";
+
+  if (/iPhone/i.test(ua)) {
+    info.deviceBrand = "Apple";
+    info.deviceModel = ua.includes("iPhone OS 16") ? "iPhone 14/15" :
+                       ua.includes("iPhone OS 15") ? "iPhone 13" :
+                       ua.includes("iPhone OS 14") ? "iPhone 12" :
+                       ua.includes("iPhone OS 13") ? "iPhone 11" : "Starší iPhone";
+  } else if (/iPad/i.test(ua)) { info.deviceBrand = "Apple"; info.deviceModel = "iPad"; }
+  else if (/Samsung/i.test(ua) || /SM-/i.test(ua)) { info.deviceBrand = "Samsung"; 
+       const m = ua.match(/SM-[A-Z0-9]+/i); info.deviceModel = m ? m[0] : "Galaxy série"; }
+  else if (/Pixel/i.test(ua)) { info.deviceBrand = "Google"; 
+       const m = ua.match(/Pixel \d+/i); info.deviceModel = m ? m[0] : "Pixel série"; }
+  else if (/Huawei/i.test(ua)) { info.deviceBrand = "Huawei"; info.deviceModel = "Huawei série"; }
+
+  // Další info
+  info.userAgent = ua;
+  info.platform = platform;
+  info.screenResolution = `${window.screen.width}x${window.screen.height}`;
+  info.windowSize = `${window.innerWidth}x${window.innerHeight}`;
+  info.language = navigator.language;
+  info.isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? "Ano" : "Ne";
+  info.orientation = (window.innerWidth > window.innerHeight) ? "Landscape" : "Portrait";
+  info.deviceMemory = navigator.deviceMemory ? navigator.deviceMemory + " GB RAM" : "Neznámá";
+  info.hardwareConcurrency = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " jader CPU" : "Neznámé";
+  info.gpuInfo = (() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Neznámé GPU";
+    } catch { return "Neznámé GPU"; }
+  })();
+
+  return info;
+}
+
+function showInfo() {
+  const i = detectDevice();
+  const container = document.getElementById("info");
+  container.innerHTML = `
+    <div><span class="label">Typ zařízení:</span> <span class="value">${i.deviceType}</span></div>
+    <div><span class="label">Značka:</span> <span class="value">${i.deviceBrand}</span></div>
+    <div><span class="label">Model:</span> <span class="value">${i.deviceModel}</span></div>
+    <div><span class="label">Operační systém:</span> <span class="value">${i.os}</span></div>
+    <div><span class="label">Prohlížeč:</span> <span class="value">${i.browser}</span></div>
+    <div><span class="label">Platforma:</span> <span class="value">${i.platform}</span></div>
+    <div><span class="label">Rozlišení obrazovky:</span> <span class="value">${i.screenResolution}</span></div>
+    <div><span class="label">Velikost okna:</span> <span class="value">${i.windowSize}</span></div>
+    <div><span class="label">Dotykové zařízení:</span> <span class="value">${i.isTouchDevice}</span></div>
+    <div><span class="label">Orientace:</span> <span class="value">${i.orientation}</span></div>
+    <div><span class="label">Jazyk:</span> <span class="value">${i.language}</span></div>
+    <div><span class="label">Paměť RAM:</span> <span class="value">${i.deviceMemory}</span></div>
+    <div><span class="label">CPU jádra:</span> <span class="value">${i.hardwareConcurrency}</span></div>
+    <div><span class="label">GPU:</span> <span class="value">${i.gpuInfo}</span></div>
+    <div><span class="label">User Agent:</span> <span class="value">${i.userAgent}</span></div>
+  `;
+}
+
+showInfo();
+window.addEventListener('resize', showInfo);
+</script>
+
+</body>
+</html>
